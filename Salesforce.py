@@ -58,8 +58,6 @@ for idi in uniqueID:
     
 
 df_accounts = df_accounts.merge(df_accounts_NoIndustry_2, how="left", on="AccountID18")
-
-
 df_accounts['Industry ID_y']= df_accounts['Industry ID_y'].fillna(0)
 for i in range(0,df_accounts.shape[0]):
     if df_accounts['Industry ID_y'][i] !=0:
@@ -87,17 +85,17 @@ sf_report_url = sf_org + report_id + export_params
 response = requests.get(sf_report_url, headers=sf.headers, cookies={'sid': sf.session_id})
 new_report = response.content.decode('utf-8')
 df_opportunities = pd.read_csv(StringIO(new_report))
-app = pd.DataFrame(columns=df_opportunities.columns)
+
 
 
 # Get the lattest opportunity
+app = pd.DataFrame(columns=df_opportunities.columns)
 idi = np.unique(df_opportunities['AccountID18'])
+df_opportunities['Created Date'] = pd.to_datetime(df_opportunities['Created Date'], format='%d/%m/%Y')
 for i in idi:
     df = df_opportunities[df_opportunities['AccountID18']==i]
     df = df.reset_index(drop=True)
     if len(df['AccountID18'])>1:
-        df['Created Date'] = pd.to_datetime(df['Created Date'], format='%d/%m/%Y')
-        
         df = df.sort_values('Created Date',ascending=False)
         df = df[df['Created Date']==df['Created Date'][0]]
         
@@ -124,22 +122,20 @@ new_report = response.content.decode('utf-8')
 df_meetings = pd.read_csv(StringIO(new_report))
 df_meetings = df_meetings[df_meetings['Created Date'] == df_meetings['Referred Date']]
 df_meetings = df_meetings.drop(['Referred Date'], axis=1)
-app = pd.DataFrame(columns=df_meetings.columns)
+
 
 #Get the latest meeting
+app = pd.DataFrame(columns=df_meetings.columns)
 idi = np.unique(df_meetings['AccountID18'])
+df_meetings['Created Date'] =  pd.to_datetime(df_meetings['Created Date'], format='%d/%m/%Y')
+
 for i in idi:
     df = df_meetings[df_meetings['AccountID18']==i]
     df = df.reset_index(drop=True)
-    if len(df['AccountID18'])>1:
-        df['Created Date'] = pd.to_datetime(df['Created Date'], format='%d/%m/%Y')
-        
-        df = df.sort_values('Created Date',ascending=False)
-        df = df.loc[[0]]
-        app = app.append(df)
-    else:
-        app = app.append(df)
-        
+    df = df.sort_values('Created Date',ascending=False)
+    df = df.loc[[0]]
+    app = app.append(df)
+
 df_meetings = app
         
     
