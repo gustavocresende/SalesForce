@@ -6,6 +6,7 @@ Created on Mon Aug 23 12:11:23 2021
 """
 
 
+
 from simple_salesforce import Salesforce
 import requests
 import pandas as pd
@@ -14,9 +15,9 @@ from io import StringIO
 from datetime import datetime
 import numpy as np
 
-#You need to Insert your credentials
+
 sf = Salesforce(username='gustavo.ciravegna@saltpay.co', 
-password='**********',
+password='5PShec5TX13',
 security_token='fvUFvCb5oPP9oRvX1f7w00Dgy')
 sf_org = 'https://saltpay-co.lightning.force.com/'
 export_params = '?isdtp=p1&export=1&enc=UTF-8&xf=csv'
@@ -35,40 +36,33 @@ new_report = response.content.decode('utf-8')
 df_accounts_outlets = pd.read_csv(StringIO(new_report))
 
 
-
 #Add Industries to the Accounts that dont have industries
-
-df_accounts_NoIndustry = df_accounts[df_accounts['Industry ID'].isnull()==True]
-df_accounts_NoIndustry  = df_accounts_NoIndustry.merge(df_accounts_outlets[['Parent Account ID','Industry ID']],how="left",left_on="Account ID",right_on="Parent Account ID")
-df_accounts_NoIndustry = df_accounts_NoIndustry.drop(['Parent Account ID','Industry ID_x'],axis=1)
-df_accounts_NoIndustry  = df_accounts_NoIndustry.rename(columns={'Industry ID_y': 'Industry ID'})
-df_accounts_NoIndustry = df_accounts_NoIndustry.groupby(['AccountID18','Account Name','Industry ID']).agg(NIndustries = ('Industry ID','count'))
-df_accounts_NoIndustry = df_accounts_NoIndustry.reset_index()
-
-n = len(df_accounts_NoIndustry.columns)-1
-df_accounts_NoIndustry_2 = pd.DataFrame(columns=df_accounts_NoIndustry.columns[0:n])
-
-
-uniqueID = np.unique(df_accounts_NoIndustry['AccountID18'])
+df_accounts_outlets = df_accounts_outlets[df_accounts_outlets['Parent Account ID'].isnull()==False]
+df_accounts_outlets = df_accounts_outlets.groupby(['Parent Account ID','Industry ID']).agg(NI=('Industry ID','count'))
+df_accounts_outlets = df_accounts_outlets.reset_index()
+uniqueID = np.unique(df_accounts_outlets['Parent Account ID'])
+app = pd.DataFrame(columns = df_accounts_outlets.columns )
 
 for idi in uniqueID:
-    df = df_accounts_NoIndustry[df_accounts_NoIndustry['AccountID18']==idi]
-    df = df.loc[[df['NIndustries'].idxmax()],['AccountID18','Account Name','Industry ID']]
-    df_accounts_NoIndustry_2= df_accounts_NoIndustry_2.append(df)
-    
+    df = df_accounts_outlets[df_accounts_outlets['Parent Account ID']==idi]
+    df = df.loc[[df['NI'].idxmax()]]
+    app = app.append(df)
+ 
+df_accounts_outlets = app
+df_accounts_outlets= df_accounts_outlets.drop(['NI'],axis=1)
+df_accounts_outlets = df_accounts_outlets.rename(columns={'Parent Account ID':'Account ID'})    
 
-df_accounts = df_accounts.merge(df_accounts_NoIndustry_2, how="left", on="AccountID18")
+
+df_accounts = df_accounts.merge(df_accounts_outlets, how="left", on="Account ID")
 df_accounts['Industry ID_y']= df_accounts['Industry ID_y'].fillna(0)
+df_accounts['Industry ID_x']= df_accounts['Industry ID_x'].fillna(0)
+
 for i in range(0,df_accounts.shape[0]):
-    if df_accounts['Industry ID_y'][i] !=0:
+    if df_accounts['Industry ID_x'][i] ==0 and df_accounts['Industry ID_y'][i] !=0 :
         df_accounts['Industry ID_x'][i] = df_accounts['Industry ID_y'][i]
     
-df_accounts = df_accounts.drop(['Industry ID_y','Account ID','Account Name_y'],axis=1)
-df_accounts = df_accounts.rename(columns={'Account Name_x':'Account Name','Industry ID_x':'Industry ID'})    
-        
-   
-    
-
+df_accounts = df_accounts.drop(['Industry ID_y','Account ID'],axis=1)
+df_accounts = df_accounts.rename(columns={'Industry ID_x':'Industry ID'})    
 
 #Activities
 report_id = '00O4L0000022s1tUAA'
@@ -170,6 +164,9 @@ df_activities.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Fran
 df_opportunities.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\Opportunities.xlsx')
 df_meetings.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\Meetings.xlsx')
 df_activities_afterclosure.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\ActivitiesAfterClosure.xlsx')
+
+
+
 
 
 
