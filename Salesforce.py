@@ -37,6 +37,7 @@ df_accounts_outlets = pd.read_csv(StringIO(new_report))
 
 
 #Add Industries to the Accounts that dont have industries
+##Get the Industry that shows the most for each parent account
 df_accounts_outlets = df_accounts_outlets[df_accounts_outlets['Parent Account ID'].isnull()==False]
 df_accounts_outlets = df_accounts_outlets.groupby(['Parent Account ID','Industry ID']).agg(NI=('Industry ID','count'))
 df_accounts_outlets = df_accounts_outlets.reset_index()
@@ -47,12 +48,15 @@ for idi in uniqueID:
     df = df_accounts_outlets[df_accounts_outlets['Parent Account ID']==idi]
     df = df.loc[[df['NI'].idxmax()]]
     app = app.append(df)
- 
+app = app.reset_index(drop=True)
+
+
 df_accounts_outlets = app
 df_accounts_outlets= df_accounts_outlets.drop(['NI'],axis=1)
 df_accounts_outlets = df_accounts_outlets.rename(columns={'Parent Account ID':'Account ID'})    
 
 
+##Merge the accounts and outlets and fill the blank customers
 df_accounts = df_accounts.merge(df_accounts_outlets, how="left", on="Account ID")
 df_accounts['Industry ID_y']= df_accounts['Industry ID_y'].fillna(0)
 df_accounts['Industry ID_x']= df_accounts['Industry ID_x'].fillna(0)
