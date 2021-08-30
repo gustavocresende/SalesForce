@@ -17,7 +17,7 @@ import numpy as np
 
 
 sf = Salesforce(username='gustavo.ciravegna@saltpay.co', 
-password='5PShec5TX13',
+password='*********',
 security_token='fvUFvCb5oPP9oRvX1f7w00Dgy')
 sf_org = 'https://saltpay-co.lightning.force.com/'
 export_params = '?isdtp=p1&export=1&enc=UTF-8&xf=csv'
