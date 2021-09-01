@@ -84,7 +84,7 @@ response = requests.get(sf_report_url, headers=sf.headers, cookies={'sid': sf.se
 new_report = response.content.decode('utf-8')
 df_activities = pd.read_csv(StringIO(new_report))
 df_activities['Start'] =  pd.to_datetime(df_activities['Start'], format="%d/%m/%Y")
-df_activities = df_activities[df_activities['Start']<=datetime.today().strftime("%d/%m/%Y")]
+df_activities = df_activities[df_activities['Start']<=datetime.today()]
 
 
 #Opportunities
