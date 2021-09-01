@@ -35,6 +35,15 @@ response = requests.get(sf_report_url, headers=sf.headers, cookies={'sid': sf.se
 new_report = response.content.decode('utf-8')
 df_accounts_outlets = pd.read_csv(StringIO(new_report))
 
+#Get only active Outlets
+status = ['New Client', 'Normal', 'Working Prospect']
+index = pd.Series([False] * df_accounts_outlets.shape[0], name='Outlet Status')
+for stat in status:
+    index = index | (df_accounts_outlets['Outlet Status'] == stat)
+
+df_accounts_outlets = df_accounts_outlets[index]
+
+
 
 #Add Industries to the Accounts that dont have industries
 ##Get the Industry that shows the most for each parent account
@@ -76,6 +85,7 @@ new_report = response.content.decode('utf-8')
 df_activities = pd.read_csv(StringIO(new_report))
 df_activities['Start'] =  pd.to_datetime(df_activities['Start'], format="%d/%m/%Y")
 df_activities = df_activities[df_activities['Start']<=datetime.today().strftime("%d/%m/%Y")]
+
 
 #Opportunities
 report_id = '00O4L0000022pz5UAA'
@@ -136,10 +146,6 @@ for i in idi:
 
 df_meetings = app
         
-    
-#Get only activities associated to the accounts
-df_activities = df_activities.merge(df_accounts['AccountID18'],how="inner",on="AccountID18")
-
 
 #Get only activities that occur before the account is closed
 index1 = df_opportunities['Stage']=="Closed Lost"
@@ -160,6 +166,16 @@ df_activities['check']= df_activities['Start'] > df_activities['Last Stage Chang
 df_activities_afterclosure =df_activities[df_activities['check'] == True]
 
 
+
+    
+#Get only activities/opp/meetings associated to the accounts
+df_activities = df_activities.merge(df_accounts['AccountID18'],how="inner",on="AccountID18")
+df_opportunities = df_opportunities.merge(df_accounts['AccountID18'],how="inner",on="AccountID18")
+df_meetings = df_meetings.merge(df_accounts['AccountID18'],how="inner",on="AccountID18")
+
+#Get only activities/meetings after 26/07/2021
+df_activities = df_activities[df_activities['Start']>=datetime(2021, 7, 26)]
+df_meetings=df_meetings[df_meetings['Created Date']>=datetime(2021, 7, 26)]
 
 #Export
 df_activities = df_activities[df_activities['check'] == False]
