@@ -162,9 +162,15 @@ df_opp2['Last Stage Change Date']= df_opp2['Last Stage Change Date'].apply(clean
 df_opp2['Last Stage Change Date'] = pd.to_datetime(df_opp2['Last Stage Change Date'],format='%d/%m/%Y')
 
 df_activities= df_activities.merge(df_opp2[['AccountID18','Last Stage Change Date']],how="left",on="AccountID18")
-df_activities['check']= df_activities['Start'] > df_activities['Last Stage Change Date']
-df_activities_afterclosure =df_activities[df_activities['check'] == True]
+df_activities['Activity after closure']= df_activities['Start'] > df_activities['Last Stage Change Date']
+df_activities_afterclosure =df_activities[df_activities['Activity after closure'] == True]
+df_activities = df_activities[df_activities['Activity after closure'] == False]
+df_activities = df_activities[df_activities.columns[0:6]]
 
+#Get only activities that occur before the account is converted to meeting
+df_activities = df_activities.merge(df_meetings[['AccountID18','Created Date']],how="left",on="AccountID18")
+df_activities['Activity after meeting']= df_activities['Start'] > df_activities['Created Date']
+df_activities = df_activities[df_activities['Activity after meeting'] == False]
 
 
     
@@ -178,15 +184,12 @@ df_activities = df_activities[df_activities['Start']>=datetime(2021, 7, 26)]
 df_meetings=df_meetings[df_meetings['Created Date']>=datetime(2021, 7, 26)]
 
 #Export
-df_activities = df_activities[df_activities['check'] == False]
+
 df_accounts.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\Accounts.xlsx')
 df_activities.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\Activities.xlsx')
 df_opportunities.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\Opportunities.xlsx')
 df_meetings.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\Meetings.xlsx')
 df_activities_afterclosure.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\ActivitiesAfterClosure.xlsx')
-
-
-
 
 
 
