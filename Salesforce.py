@@ -29,53 +29,7 @@ response = requests.get(sf_report_url, headers=sf.headers, cookies={'sid': sf.se
 new_report = response.content.decode('utf-8')
 df_accounts = pd.read_csv(StringIO(new_report))
 
-report_id = '00O8e000000VIXCEA4'
-sf_report_url = sf_org + report_id + export_params
-response = requests.get(sf_report_url, headers=sf.headers, cookies={'sid': sf.session_id})
-new_report = response.content.decode('utf-8')
-df_accounts_outlets = pd.read_csv(StringIO(new_report))
 
-#Get only active Outlets
-status = ['New Client', 'Normal', 'Working Prospect']
-index = pd.Series([False] * df_accounts_outlets.shape[0], name='Outlet Status')
-for stat in status:
-    index = index | (df_accounts_outlets['Outlet Status'] == stat)
-
-df_accounts_outlets = df_accounts_outlets[index]
-
-
-
-#Add Industries to the Accounts that dont have industries
-##Get the Industry that shows the most for each parent account
-df_accounts_outlets = df_accounts_outlets[df_accounts_outlets['Parent Account ID'].isnull()==False]
-df_accounts_outlets = df_accounts_outlets.groupby(['Parent Account ID','Industry ID']).agg(NI=('Industry ID','count'))
-df_accounts_outlets = df_accounts_outlets.reset_index()
-uniqueID = np.unique(df_accounts_outlets['Parent Account ID'])
-app = pd.DataFrame(columns = df_accounts_outlets.columns )
-
-for idi in uniqueID:
-    df = df_accounts_outlets[df_accounts_outlets['Parent Account ID']==idi]
-    df = df.loc[[df['NI'].idxmax()]]
-    app = app.append(df)
-app = app.reset_index(drop=True)
-
-
-df_accounts_outlets = app
-df_accounts_outlets= df_accounts_outlets.drop(['NI'],axis=1)
-df_accounts_outlets = df_accounts_outlets.rename(columns={'Parent Account ID':'Account ID'})    
-
-
-##Merge the accounts and outlets and fill the blank customers
-df_accounts = df_accounts.merge(df_accounts_outlets, how="left", on="Account ID")
-df_accounts['Industry ID_y']= df_accounts['Industry ID_y'].fillna(0)
-df_accounts['Industry ID_x']= df_accounts['Industry ID_x'].fillna(0)
-
-for i in range(0,df_accounts.shape[0]):
-    if df_accounts['Industry ID_x'][i] ==0 and df_accounts['Industry ID_y'][i] !=0 :
-        df_accounts['Industry ID_x'][i] = df_accounts['Industry ID_y'][i]
-    
-df_accounts = df_accounts.drop(['Industry ID_y','Account ID'],axis=1)
-df_accounts = df_accounts.rename(columns={'Industry ID_x':'Industry ID'})    
 
 #Activities
 report_id = '00O4L0000022s1tUAA'
@@ -136,10 +90,10 @@ df_meetings = df_meetings.drop(['Referred Date'], axis=1)
 app = pd.DataFrame(columns=df_meetings.columns)
 idi = np.unique(df_meetings['AccountID18'])
 df_meetings['Created Date'] =  pd.to_datetime(df_meetings['Created Date'], format='%d/%m/%Y')
-
+df_meetings['Date'] =  pd.to_datetime(df_meetings['Date'], format='%d/%m/%Y')
 for i in idi:
     df = df_meetings[df_meetings['AccountID18']==i]
-    df = df.sort_values('Created Date',ascending=False)
+    df = df.sort_values('Date',ascending=False)
     df = df.reset_index(drop=True)
     df = df.loc[[0]]
     app = app.append(df)
@@ -163,7 +117,6 @@ df_opp2['Last Stage Change Date'] = pd.to_datetime(df_opp2['Last Stage Change Da
 
 df_activities= df_activities.merge(df_opp2[['AccountID18','Last Stage Change Date']],how="left",on="AccountID18")
 df_activities['Activity after closure']= df_activities['Start'] > df_activities['Last Stage Change Date']
-df_activities_afterclosure =df_activities[df_activities['Activity after closure'] == True]
 df_activities = df_activities[df_activities['Activity after closure'] == False]
 df_activities = df_activities[df_activities.columns[0:6]]
 
@@ -189,7 +142,8 @@ df_accounts.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Franci
 df_activities.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\Activities.xlsx')
 df_opportunities.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\Opportunities.xlsx')
 df_meetings.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\Meetings.xlsx')
-df_activities_afterclosure.to_excel(r'C:\Users\gvegn\OneDrive\Desktop\Documents\11. Data Francisco\Controlo\Data\ActivitiesAfterClosure.xlsx')
+
+
 
 
 
