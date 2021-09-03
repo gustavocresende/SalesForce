@@ -118,13 +118,12 @@ df_opp2['Last Stage Change Date'] = pd.to_datetime(df_opp2['Last Stage Change Da
 df_activities= df_activities.merge(df_opp2[['AccountID18','Last Stage Change Date']],how="left",on="AccountID18")
 df_activities['Activity after closure']= df_activities['Start'] > df_activities['Last Stage Change Date']
 df_activities = df_activities[df_activities['Activity after closure'] == False]
-df_activities = df_activities[df_activities.columns[0:6]]
+df_activities = df_activities.drop(['Activity after closure','Last Stage Change Date'],axis=1)
 
 #Get only activities that occur before the account is converted to meeting
 df_activities = df_activities.merge(df_meetings[['AccountID18','Created Date']],how="left",on="AccountID18")
 df_activities['Activity after meeting']= df_activities['Start'] > df_activities['Created Date']
 df_activities = df_activities[df_activities['Activity after meeting'] == False]
-
 df_activities = df_activities.drop(['Created Date','Activity after meeting'],axis=1)
 
 #Get only activities/opp/meetings associated to the accounts
