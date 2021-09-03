@@ -102,9 +102,9 @@ idi = np.unique(df_opportunities['AccountID18'])
 df_opportunities['Created Date'] = pd.to_datetime(df_opportunities['Created Date'], format='%d/%m/%Y')
 for i in idi:
     df = df_opportunities[df_opportunities['AccountID18']==i]
-    df = df.reset_index(drop=True)
     if len(df['AccountID18'])>1:
         df = df.sort_values('Created Date',ascending=False)
+        df = df.reset_index(drop=True)
         df = df[df['Created Date']==df['Created Date'][0]]
         
         for j in range(0,len(df['Created Date'])):
@@ -139,8 +139,8 @@ df_meetings['Created Date'] =  pd.to_datetime(df_meetings['Created Date'], forma
 
 for i in idi:
     df = df_meetings[df_meetings['AccountID18']==i]
-    df = df.reset_index(drop=True)
     df = df.sort_values('Created Date',ascending=False)
+    df = df.reset_index(drop=True)
     df = df.loc[[0]]
     app = app.append(df)
 
@@ -172,8 +172,8 @@ df_activities = df_activities.merge(df_meetings[['AccountID18','Created Date']],
 df_activities['Activity after meeting']= df_activities['Start'] > df_activities['Created Date']
 df_activities = df_activities[df_activities['Activity after meeting'] == False]
 
+df_activities = df_activities.drop(['Created Date','Activity after meeting'],axis=1)
 
-    
 #Get only activities/opp/meetings associated to the accounts
 df_activities = df_activities.merge(df_accounts['AccountID18'],how="inner",on="AccountID18")
 df_opportunities = df_opportunities.merge(df_accounts['AccountID18'],how="inner",on="AccountID18")
